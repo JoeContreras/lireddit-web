@@ -5,8 +5,7 @@ field
 message
 }
 user{
-id
-username
+...RegularUser
 }
 }
 }
