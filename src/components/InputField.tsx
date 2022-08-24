@@ -5,7 +5,7 @@ import {
   FormLabel,
   Input,
 } from "@chakra-ui/react";
-import { FieldInputProps, useField } from "formik";
+import { useField } from "formik";
 
 type InputFieldProps = InputHTMLAttributes<HTMLElement> & {
   //Make these attributes required

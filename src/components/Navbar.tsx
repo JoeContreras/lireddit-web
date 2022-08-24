@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Box, Button, Flex, Link } from "@chakra-ui/react";
 import NextLink from "next/link";
 import { useLogoutMutation, useMeQuery } from "../generated/graphql";
@@ -6,9 +6,18 @@ import { useLogoutMutation, useMeQuery } from "../generated/graphql";
 interface NavbarProps {}
 
 const Navbar = ({}: NavbarProps) => {
+  const [isServer, setIsServer] = useState(true);
   const [{ fetching: logoutFetching }, logout] = useLogoutMutation();
-  const [{ data, fetching }] = useMeQuery();
+  const [{ data, fetching }] = useMeQuery({
+    pause: isServer,
+  });
   let body = null;
+  console.log("data", data);
+
+  //UseEffect Only runs in the browser,
+  //So, don't run the query(pause:true) only when in ssr
+  useEffect(() => setIsServer(false), []);
+
   //data is loading
   if (fetching) {
     //user not logged in
