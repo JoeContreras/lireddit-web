@@ -12,7 +12,6 @@ const Navbar = ({}: NavbarProps) => {
     pause: isServer,
   });
   let body = null;
-  console.log("data", data);
 
   //UseEffect Only runs in the browser,
   //So, don't run the query(pause:true) only when in ssr
