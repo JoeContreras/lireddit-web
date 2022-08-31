@@ -41,7 +41,7 @@ export type MutationChangePasswordArgs = {
 
 
 export type MutationCreatePostArgs = {
-  title: Scalars['String'];
+  input: PostInput;
 };
 
 
@@ -74,9 +74,17 @@ export type MutationUpdatePostArgs = {
 export type Post = {
   __typename?: 'Post';
   createdAt: Scalars['String'];
+  creatorId: Scalars['String'];
   id: Scalars['Int'];
+  points: Scalars['Int'];
+  text: Scalars['String'];
   title: Scalars['String'];
   updatedAt: Scalars['String'];
+};
+
+export type PostInput = {
+  text: Scalars['String'];
+  title: Scalars['String'];
 };
 
 export type Query = {
@@ -118,6 +126,13 @@ export type RegularErrorFragment = { __typename?: 'FieldError', field: string, m
 export type RegularUserFragment = { __typename?: 'User', id: number, username: string };
 
 export type RegularUserResponseFragment = { __typename?: 'UserResponse', errors?: Array<{ __typename?: 'FieldError', field: string, message: string }> | null, user?: { __typename?: 'User', id: number, username: string } | null };
+
+export type CreatePostMutationVariables = Exact<{
+  input: PostInput;
+}>;
+
+
+export type CreatePostMutation = { __typename?: 'Mutation', createPost: { __typename?: 'Post', id: number, createdAt: string, updatedAt: string, title: string, text: string, points: number, creatorId: string } };
 
 export type ChangePasswordMutationVariables = Exact<{
   token: Scalars['String'];
@@ -187,6 +202,23 @@ export const RegularUserResponseFragmentDoc = gql`
 }
     ${RegularErrorFragmentDoc}
 ${RegularUserFragmentDoc}`;
+export const CreatePostDocument = gql`
+    mutation CreatePost($input: PostInput!) {
+  createPost(input: $input) {
+    id
+    createdAt
+    updatedAt
+    title
+    text
+    points
+    creatorId
+  }
+}
+    `;
+
+export function useCreatePostMutation() {
+  return Urql.useMutation<CreatePostMutation, CreatePostMutationVariables>(CreatePostDocument);
+};
 export const ChangePasswordDocument = gql`
     mutation ChangePassword($token: String!, $newPassword: String!) {
   changePassword(token: $token, newPassword: $newPassword) {
