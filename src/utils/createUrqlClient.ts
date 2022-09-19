@@ -4,7 +4,7 @@ import {
   fetchExchange,
   stringifyVariables,
 } from "urql";
-import { cacheExchange, Resolver } from "@urql/exchange-graphcache";
+import { cacheExchange, Resolver, Cache } from "@urql/exchange-graphcache";
 import {
   DeletePostMutationVariables,
   LoginMutation,
@@ -17,6 +17,14 @@ import {
 import betterUpdateQuery from "./betterUpdateQuery";
 import Router from "next/router";
 import gql from "graphql-tag";
+
+const invalidateAllPosts = (cache: Cache) => {
+  const allFields = cache.inspectFields("Query");
+  const fieldInfos = allFields.filter((info) => info.fieldName === "posts");
+  fieldInfos.forEach((fi) => {
+    cache.invalidate("Query", "posts", fi.arguments || {});
+  });
+};
 
 export const cursorPagination = (): Resolver<any, any, any> => {
   return (_parent, fieldArgs, cache, info) => {
@@ -53,60 +61,6 @@ export const cursorPagination = (): Resolver<any, any, any> => {
       hasMore: hasMore,
       posts: results,
     };
-
-    /*
-    const visited = new Set();
-    let result: NullArray<string> = [];
-    let prevOffset: number | null = null;
-
-    for (let i = 0; i < size; i++) {
-      const { fieldKey, arguments: args } = fieldInfos[i];
-      if (args === null || !compareArgs(fieldArgs, args)) {
-        continue;
-      }
-
-      const links = cache.resolve(entityKey, fieldKey) as string[];
-      const currentOffset = args[offsetArgument];
-
-      if (
-        links === null ||
-        links.length === 0 ||
-        typeof currentOffset !== "number"
-      ) {
-        continue;
-      }
-
-      const tempResult: NullArray<string> = [];
-
-      for (let j = 0; j < links.length; j++) {
-        const link = links[j];
-        if (visited.has(link)) continue;
-        tempResult.push(link);
-        visited.add(link);
-      }
-
-      if (
-        (!prevOffset || currentOffset > prevOffset) ===
-        (mergeMode === "after")
-      ) {
-        result = [...result, ...tempResult];
-      } else {
-        result = [...tempResult, ...result];
-      }
-
-      prevOffset = currentOffset;
-    }
-
-    const hasCurrentPage = cache.resolve(entityKey, fieldName, fieldArgs);
-    if (hasCurrentPage) {
-      return result;
-    } else if (!(info as any).store.schema) {
-      return undefined;
-    } else {
-      info.partial = true;
-      return result;
-    }
-*/
   };
 };
 
@@ -176,13 +130,7 @@ export const createUrqlClient = (ssrExchange: any, ctx: any) => {
               }
             },
             createPost: (_result, _args, cache, _info) => {
-              const allFields = cache.inspectFields("Query");
-              const fieldInfos = allFields.filter(
-                (info) => info.fieldName === "posts"
-              );
-              fieldInfos.forEach((fi) => {
-                cache.invalidate("Query", "posts", fi.arguments || {});
-              });
+              invalidateAllPosts(cache);
             },
             logout: (_result, _args, cache, _info) => {
               betterUpdateQuery<LogoutMutation, MeQuery>(
@@ -207,6 +155,7 @@ export const createUrqlClient = (ssrExchange: any, ctx: any) => {
                   }
                 }
               );
+              invalidateAllPosts(cache);
             },
             register: (_result, _args, cache, _info) => {
               betterUpdateQuery<RegisterMutation, MeQuery>(
