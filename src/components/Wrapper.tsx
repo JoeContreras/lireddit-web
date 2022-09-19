@@ -6,7 +6,7 @@ interface WrapperProps {
   variant?: WrapperVariant;
 }
 
-const Wrapper: React.FC<WrapperProps> = ({ variant, children }) => {
+const Wrapper: React.FC<WrapperProps> = ({ children, variant = "medium" }) => {
   return (
     <Box
       maxW={variant === "medium" ? "800px" : "400px"}
