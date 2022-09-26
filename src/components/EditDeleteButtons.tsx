@@ -10,8 +10,8 @@ interface EditDeleteButtonsProps {
 }
 
 const EditDeleteButtons = ({ id, creatorId }: EditDeleteButtonsProps) => {
-  const [, deletePost] = useDeletePostMutation();
-  const [{ data: meData }] = useMeQuery();
+  const [deletePost] = useDeletePostMutation();
+  const { data: meData } = useMeQuery();
 
   if (meData?.me?.id !== creatorId) {
     return null;
@@ -33,7 +33,12 @@ const EditDeleteButtons = ({ id, creatorId }: EditDeleteButtonsProps) => {
         icon={<DeleteIcon h={5} w={5} />}
         color="red.400"
         onClick={async () => {
-          await deletePost({ id: id });
+          await deletePost({
+            variables: { id: id },
+            update: (cache) => {
+              cache.evict({ id: "Post:" + id });
+            },
+          });
         }}
       />
     </Box>

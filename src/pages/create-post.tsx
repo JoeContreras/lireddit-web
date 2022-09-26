@@ -3,14 +3,13 @@ import { Form, Formik } from "formik";
 import InputField from "../components/InputField";
 import { Box, Button, Flex } from "@chakra-ui/react";
 import { useCreatePostMutation } from "../generated/graphql";
-import { withUrqlClient } from "next-urql";
-import { createUrqlClient } from "../utils/createUrqlClient";
 import Layout from "../components/Layout";
 import { useRouter } from "next/router";
 import { useIsAuth } from "../utils/hooks/useIsAuth";
+import { withApollo } from "../utils/withApollo";
 
 const CreatePost = () => {
-  const [, createPost] = useCreatePostMutation();
+  const [createPost] = useCreatePostMutation();
   const router = useRouter();
   useIsAuth();
   return (
@@ -18,8 +17,13 @@ const CreatePost = () => {
       <Formik
         initialValues={{ title: "", text: "" }}
         onSubmit={async (values) => {
-          const { error } = await createPost({ input: values });
-          if (!error) {
+          const response = await createPost({
+            variables: { input: values },
+            update: (cache) => {
+              cache.evict({ fieldName: "posts:{}" });
+            },
+          });
+          if (!response.errors) {
             await router.push("/");
           }
         }}
@@ -51,4 +55,4 @@ const CreatePost = () => {
   );
 };
 
-export default withUrqlClient(createUrqlClient)(CreatePost);
+export default withApollo({ ssr: false })(CreatePost);

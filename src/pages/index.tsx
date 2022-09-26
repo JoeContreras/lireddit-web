@@ -1,5 +1,3 @@
-import { withUrqlClient } from "next-urql";
-import { createUrqlClient } from "../utils/createUrqlClient";
 import { usePostsQuery } from "../generated/graphql";
 import Layout from "../components/Layout";
 import NextLink from "next/link";
@@ -12,20 +10,20 @@ import {
   Stack,
   Text,
 } from "@chakra-ui/react";
-import { useState } from "react";
 import UpdootSection from "../components/UpdootSection";
 import EditDeleteButtons from "../components/EditDeleteButtons";
+import { withApollo } from "../utils/withApollo";
 
 const Index = () => {
-  const [variables, setVariables] = useState({
-    limit: 15,
-    cursor: null as null | string,
-  });
-  const [{ data, error, fetching }] = usePostsQuery({
-    variables: variables,
+  const { data, error, loading, fetchMore, variables } = usePostsQuery({
+    variables: {
+      limit: 15,
+      cursor: null,
+    },
+    notifyOnNetworkStatusChange: true,
   });
 
-  if (!fetching && !data) {
+  if (!loading && !data) {
     return (
       <>
         <div>The query failed </div>
@@ -37,9 +35,16 @@ const Index = () => {
   return (
     <Layout>
       <Stack spacing={8}>
-        {!fetching && data ? (
-          data.posts.posts.map((post) => (
-            <Flex key={post.id} p={5} shadow="md" borderWidth="1px">
+        {loading && !data ? (
+          <div>loading...</div>
+        ) : (
+          data!.posts.posts.map((post, index) => (
+            <Flex
+              key={`${post.id}.${index}`}
+              p={5}
+              shadow="md"
+              borderWidth="1px"
+            >
               <UpdootSection post={post} />
               <Box flex={1}>
                 <NextLink href="/post/[id]" as={`/post/${post.id}`} passHref>
@@ -63,20 +68,21 @@ const Index = () => {
               </Box>
             </Flex>
           ))
-        ) : (
-          <div>loading...</div>
         )}
       </Stack>
       {data && data.posts.hasMore ? (
         <Flex>
           <Button
-            isLoading={fetching}
+            isLoading={loading}
             m="auto"
             my={8}
-            onClick={() => {
-              setVariables({
-                limit: variables.limit,
-                cursor: data.posts.posts[data.posts.posts.length - 1].createdAt,
+            onClick={async () => {
+              await fetchMore({
+                variables: {
+                  limit: variables?.limit,
+                  cursor:
+                    data.posts.posts[data.posts.posts.length - 1].createdAt,
+                },
               });
             }}
           >
@@ -88,4 +94,4 @@ const Index = () => {
   );
 };
 
-export default withUrqlClient(createUrqlClient, { ssr: true })(Index);
+export default withApollo({ ssr: true })(Index);
